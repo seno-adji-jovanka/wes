@@ -1,0 +1,5 @@
+{
+  "name": "Hospital ERP for Accounting",
+  "description": "A comprehensive Enterprise Resource Planning (ERP) system tailored for accounting professionals in a hospital setting. It features modules for dashboard analytics, invoicing, expense tracking, and financial reporting, enhanced with a Gemini-powered AI financial assistant for natural language data queries.",
+  "requestFramePermissions": []
+}
