@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, Loader, MessageCircle } from 'lucide-react';
 import type { Message } from '../types';
-import { useMockData } from '../hooks/useMockData';
+import { useFinancialData } from '../context/FinancialContext';
 import { getAIAssistantResponse } from '../services/geminiService';
 
 
@@ -11,7 +11,7 @@ const FinancialAssistant: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const financialData = useMockData();
+    const { data: financialData } = useFinancialData();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {

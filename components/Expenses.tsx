@@ -1,14 +1,38 @@
 
 import React, { useState, useMemo } from 'react';
-import { useMockData } from '../hooks/useMockData';
+import { useFinancialData } from '../context/FinancialContext';
 import type { Expense } from '../types';
 import { ExpenseCategory } from '../types';
-import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 
 const Expenses: React.FC = () => {
-  const data = useMockData();
+  const { data, addExpense } = useFinancialData();
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Expense; direction: 'ascending' | 'descending' } | null>({ key: 'date', direction: 'descending' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Form State
+  const [newDescription, setNewDescription] = useState('');
+  const [newCategory, setNewCategory] = useState<ExpenseCategory>(ExpenseCategory.MedicalSupplies);
+  const [newAmount, setNewAmount] = useState('');
+  const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDescription || !newAmount) return;
+
+    addExpense({
+        description: newDescription,
+        category: newCategory,
+        amount: parseFloat(newAmount),
+        date: newDate,
+    });
+
+    setNewDescription('');
+    setNewCategory(ExpenseCategory.MedicalSupplies);
+    setNewAmount('');
+    setIsModalOpen(false);
+  };
   
   const filteredAndSortedExpenses = useMemo(() => {
     if (!data?.expenses) return [];
@@ -59,7 +83,11 @@ const Expenses: React.FC = () => {
             <option value="all">All Categories</option>
             {Object.values(ExpenseCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
           </select>
-          <button className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
             New Expense
           </button>
         </div>
@@ -94,6 +122,83 @@ const Expenses: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+       {/* New Expense Modal */}
+       {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div className="p-4 bg-slate-50 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-800">Log New Expense</h3>
+                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                        <X className="h-6 w-6" />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                        <input 
+                            required
+                            type="text" 
+                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                            value={newDescription}
+                            onChange={(e) => setNewDescription(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                        <select 
+                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                            value={newCategory}
+                            onChange={(e) => setNewCategory(e.target.value as ExpenseCategory)}
+                        >
+                            {Object.values(ExpenseCategory).map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Amount ($)</label>
+                            <input 
+                                required
+                                type="number" 
+                                min="0"
+                                step="0.01"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                                value={newAmount}
+                                onChange={(e) => setNewAmount(e.target.value)}
+                            />
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                            <input 
+                                required
+                                type="date" 
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                                value={newDate}
+                                onChange={(e) => setNewDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="pt-4 flex justify-end gap-3">
+                        <button 
+                            type="button" 
+                            onClick={() => setIsModalOpen(false)}
+                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit" 
+                            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+                        >
+                            Log Expense
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

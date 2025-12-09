@@ -6,6 +6,7 @@ import Invoicing from './components/Invoicing';
 import Expenses from './components/Expenses';
 import Reporting from './components/Reporting';
 import FinancialAssistant from './components/FinancialAssistant';
+import { FinancialProvider } from './context/FinancialContext';
 import type { View } from './types';
 
 const App: React.FC = () => {
@@ -27,15 +28,17 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-100 font-sans">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-4 sm:p-6 lg:p-8">
-          {renderView()}
-        </div>
-      </main>
-      <FinancialAssistant />
-    </div>
+    <FinancialProvider>
+      <div className="flex h-screen bg-slate-100 font-sans">
+        <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8">
+            {renderView()}
+          </div>
+        </main>
+        <FinancialAssistant />
+      </div>
+    </FinancialProvider>
   );
 };
 

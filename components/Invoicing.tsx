@@ -1,13 +1,42 @@
 
 import React, { useState, useMemo } from 'react';
-import { useMockData } from '../hooks/useMockData';
+import { useFinancialData } from '../context/FinancialContext';
 import { Invoice, InvoiceStatus } from '../types';
-import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 
 const Invoicing: React.FC = () => {
-  const data = useMockData();
+  const { data, addInvoice } = useFinancialData();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Invoice; direction: 'ascending' | 'descending' } | null>({ key: 'date', direction: 'descending' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Form State
+  const [newPatientName, setNewPatientName] = useState('');
+  const [newService, setNewService] = useState('');
+  const [newCost, setNewCost] = useState('');
+  const [newStatus, setNewStatus] = useState<InvoiceStatus>(InvoiceStatus.Pending);
+  const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPatientName || !newService || !newCost) return;
+
+    const cost = parseFloat(newCost);
+    addInvoice({
+        patientName: newPatientName,
+        date: newDate,
+        amount: cost,
+        status: newStatus,
+        items: [{ service: newService, cost: cost }]
+    });
+
+    // Reset and close
+    setNewPatientName('');
+    setNewService('');
+    setNewCost('');
+    setNewStatus(InvoiceStatus.Pending);
+    setIsModalOpen(false);
+  };
   
   const sortedInvoices = useMemo(() => {
     if (!data?.invoices) return [];
@@ -65,7 +94,11 @@ const Invoicing: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
             New Invoice
           </button>
         </div>
@@ -101,6 +134,93 @@ const Invoicing: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* New Invoice Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div className="p-4 bg-slate-50 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-800">Create New Invoice</h3>
+                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                        <X className="h-6 w-6" />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Patient Name</label>
+                        <input 
+                            required
+                            type="text" 
+                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                            value={newPatientName}
+                            onChange={(e) => setNewPatientName(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Service Description</label>
+                        <input 
+                            required
+                            type="text" 
+                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                            value={newService}
+                            onChange={(e) => setNewService(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Amount ($)</label>
+                            <input 
+                                required
+                                type="number" 
+                                min="0"
+                                step="0.01"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                                value={newCost}
+                                onChange={(e) => setNewCost(e.target.value)}
+                            />
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                            <input 
+                                required
+                                type="date" 
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                                value={newDate}
+                                onChange={(e) => setNewDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                        <select 
+                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none"
+                            value={newStatus}
+                            onChange={(e) => setNewStatus(e.target.value as InvoiceStatus)}
+                        >
+                            {Object.values(InvoiceStatus).map(status => (
+                                <option key={status} value={status}>{status}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="pt-4 flex justify-end gap-3">
+                        <button 
+                            type="button" 
+                            onClick={() => setIsModalOpen(false)}
+                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit" 
+                            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+                        >
+                            Create Invoice
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

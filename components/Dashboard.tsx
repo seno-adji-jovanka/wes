@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useMockData } from '../hooks/useMockData';
+import { useFinancialData } from '../context/FinancialContext';
 import { DollarSign, TrendingUp, TrendingDown, Users, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -19,7 +19,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ElementType
 };
 
 const Dashboard: React.FC = () => {
-  const data = useMockData();
+  const { data } = useFinancialData();
 
   if (!data) {
     return <div className="text-center p-10">Loading financial data...</div>;

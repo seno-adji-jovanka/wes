@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { useMockData } from '../hooks/useMockData';
+import { useFinancialData } from '../context/FinancialContext';
 import { Download } from 'lucide-react';
 
 const Reporting: React.FC = () => {
-  const data = useMockData();
+  const { data } = useFinancialData();
 
   if (!data) {
     return <div className="text-center p-10">Loading report data...</div>;
@@ -13,13 +13,58 @@ const Reporting: React.FC = () => {
   const { summary, invoices, expenses } = data;
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
+  const handleDownload = () => {
+    // Construct CSV Data
+    const rows = [];
+    
+    // Summary Section
+    rows.push(['FINANCIAL SUMMARY']);
+    rows.push(['Metric', 'Value']);
+    rows.push(['Total Revenue', summary.totalRevenue]);
+    rows.push(['Total Expenses', summary.totalExpenses]);
+    rows.push(['Net Profit', summary.netProfit]);
+    rows.push(['Accounts Receivable', summary.accountsReceivable]);
+    rows.push(['Accounts Payable', summary.accountsPayable]);
+    rows.push([]);
+
+    // Invoices Section
+    rows.push(['INVOICES']);
+    rows.push(['ID', 'Patient Name', 'Date', 'Amount', 'Status', 'Service Details']);
+    invoices.forEach(inv => {
+        const details = inv.items.map(i => `${i.service} ($${i.cost})`).join('; ');
+        rows.push([inv.id, inv.patientName, inv.date, inv.amount, inv.status, details]);
+    });
+    rows.push([]);
+
+    // Expenses Section
+    rows.push(['EXPENSES']);
+    rows.push(['ID', 'Date', 'Category', 'Description', 'Amount']);
+    expenses.forEach(exp => {
+        rows.push([exp.id, exp.date, exp.category, exp.description, exp.amount]);
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + rows.map(e => e.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "hospital_financial_report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-8">
         <div className="flex justify-between items-center">
             <h2 className="text-3xl font-bold text-slate-800">Financial Reports</h2>
-            <button className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors">
+            <button 
+                onClick={handleDownload}
+                className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+            >
                 <Download className="h-4 w-4 mr-2" />
-                Download All
+                Download All (CSV)
             </button>
         </div>
         
